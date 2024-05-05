@@ -10,10 +10,34 @@ if (isset($_SESSION['user'])) {
     $loggedIn = false;
 }
 
-// Load featured products from the database
+function loadFeaturedProducts() {
+    global $wpdb; 
+    $tableName = $wpdb->prefix . 'products';
+
+    $query = "SELECT id, name, description, price FROM {$tableName} WHERE featured = 1";
+    $featuredProducts = $wpdb->get_results($query, ARRAY_A);
+
+    return $featuredProducts;
+}
+
+// Function to filter products based on keyword
+function filterProductsByKeyword($keyword) {
+    $allProducts = loadFeaturedProducts();
+    return array_filter($allProducts, function($product) use ($keyword) {
+        return stripos($product['name'], $keyword) !== false;
+    });
+}
+
+// Function to sort products
+function sortProducts($products, $sortOption) {
+    usort($products, function($a, $b) use ($sortOption) {
+        return $sortOption === 'price_asc' ? $a['price'] <=> $b['price'] : $b['price'] <=> $a['price'];
+    });
+    return $products;
+}
+
 $featuredProducts = loadFeaturedProducts();
 
-// Handle search form submission
 if (isset($_GET['search'])) {
     $keyword = $_GET['search'];
     $filteredProducts = filterProductsByKeyword($keyword);
@@ -21,79 +45,60 @@ if (isset($_GET['search'])) {
     $filteredProducts = $featuredProducts;
 }
 
-// Handle sorting and filtering options
 if (isset($_GET['sort'])) {
     $sortOption = $_GET['sort'];
     $filteredProducts = sortProducts($filteredProducts, $sortOption);
 }
 
-// Function to load featured products from the database
-function loadFeaturedProducts() {
-    // Your implementation here
-}
-
-// Function to filter products based on keyword
-function filterProductsByKeyword($keyword) {
-    // Your implementation here
-}
-
-// Function to sort products
-function sortProducts($products, $sortOption) {
-    // Your implementation here
-}
-
+include('includes/header.php');
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>E-commerce Website</title>
-    <!-- Include your CSS and JavaScript files here -->
 </head>
 <body>
-    <header>
-        <!-- Navigation links -->
-        <nav>
-            <ul>
-                <li><a href="signup.php">Sign-up</a></li>
-                <li><a href="myaccount.php">My Account</a></li>
-                <li><a href="aboutus.php">About Us</a></li>
-                <li><a href="contactus.php">Contact Us</a></li>
-                <li><a href="categories.php">Categories</a></li>
-                <?php if ($loggedIn) { ?>
-                    <li><a href="logout.php">Logout</a></li>
-                <?php } else { ?>
-                    <li><a href="login.php">Login</a></li>
-                <?php } ?>
-            </ul>
-        </nav>
-    </header>
-
     <main>
-        <!-- Product slider -->
         <div class="slider">
-            <!-- Display featured products here -->
+            <?php foreach ($featuredProducts as $product): ?>
+                <div>
+                    <img src="placeholder.jpg" alt="<?php echo htmlspecialchars($product['name']); ?>"> <!-- Placeholder image -->
+                    <h3><?php echo htmlspecialchars($product['name']); ?></h3>
+                    <p><?php echo htmlspecialchars($product['description']); ?></p>
+                    <p>$<?php echo htmlspecialchars($product['price']); ?></p>
+                </div>
+            <?php endforeach; ?>
         </div>
 
-        <!-- Search form -->
         <form action="" method="GET">
-            <input type="text" name="search" placeholder="Search products">
+            <input type="text" name="search" placeholder="Search products" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
             <button type="submit">Search</button>
         </form>
 
-        <!-- Product sorting and filtering options -->
         <div class="options">
-            <!-- Display sorting and filtering options here -->
+            <form action="" method="GET">
+                <select name="sort" onchange="this.form.submit()">
+                    <option value="price_asc">Price Low to High</option>
+                    <option value="price_desc">Price High to Low</option>
+                </select>
+            </form>
         </div>
 
-        <!-- Display filtered products here -->
         <div class="products">
-            <!-- Display filtered products here -->
+            <?php foreach ($filteredProducts as $product): ?>
+                <div>
+                    <h3><?php echo htmlspecialchars($product['name']); ?></h3>
+                    <p><?php echo htmlspecialchars($product['description']); ?></p>
+                    <p>$<?php echo htmlspecialchars($product['price']); ?></p>
+                </div>
+            <?php endforeach; ?>
         </div>
     </main>
 
-    <footer>
-        <!-- Footer content here -->
-    </footer>
+    <?php
+    include('includes/footer.php');
+    ?>
+
 </body>
 </html>

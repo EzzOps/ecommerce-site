@@ -10,29 +10,23 @@ if (isset($_SESSION['user_id'])) {
 
 // Check if the login form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get the submitted credentials
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // TODO: Validate and sanitize the input
+    $username = filter_var($username, FILTER_SANITIZE_STRING);
+    $password = filter_var($password, FILTER_SANITIZE_STRING);
 
-    // TODO: Verify the credentials against the database
-    // Example code:
-    // $user = getUserByUsername($username);
-    // if ($user && password_verify($password, $user['password'])) {
-    //     // Credentials are valid, initiate a session
-    //     $_SESSION['user_id'] = $user['id'];
-    //     // Redirect to the home page or account page
-    //     header("Location: home.php");
-    //     exit;
-    // }
-
-    // If the credentials are not valid, show an error message
-    $error = "Invalid username or password";
+    $user = getUserByUsername($username);
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        header("Location: home.php");
+        exit;
+    } else {
+        $error = "Invalid username or password";
+    }
 }
 
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>

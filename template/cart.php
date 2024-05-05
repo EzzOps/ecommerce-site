@@ -4,24 +4,28 @@
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    // Redirect to login page or display an error message
     header('Location: login.php');
     exit;
 }
 
-// Fetch Cart Items: Retrieve items the user has placed in their cart.
-$cartItems = []; // Replace with your logic to fetch cart items from the database or session
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
+$cartItems = &$_SESSION['cart'];
 
-// Modify Cart: Enable the user to update item quantities or remove items.
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Handle form submission to update cart items
-    // Replace with your logic to update the cart items in the database or session
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
+    foreach ($_POST['quantities'] as $key => $quantity) {
+        if ($quantity == 0) {
+            unset($cartItems[$key]);
+        } else {
+            $cartItems[$key]['quantity'] = $quantity;
+        }
+    }
 }
 
-// Checkout Process: Implement a form for proceeding to checkout
 if (isset($_POST['checkout'])) {
-    // Handle checkout process
-    // Replace with your logic to process the checkout, including entering shipping details and completing the order
+    header('Location: checkout.php');
+    exit;
 }
 
 ?>
@@ -30,35 +34,28 @@ if (isset($_POST['checkout'])) {
 <html>
 <head>
     <title>Shopping Cart</title>
-    <!-- Add your CSS and JavaScript files here -->
 </head>
 <body>
     <h1>Shopping Cart</h1>
-
-    <!-- Display cart items -->
     <div>
-        <?php foreach ($cartItems as $item): ?>
-            <div>
-                <h3><?php echo $item['name']; ?></h3>
-                <p>Price: <?php echo $item['price']; ?></p>
-                <p>Quantity: <?php echo $item['quantity']; ?></p>
-                <!-- Add form inputs to update item quantities or remove items -->
-            </div>
-        <?php endforeach; ?>
+        <?php if (!empty($cartItems)): ?>
+            <form method="post">
+                <?php foreach ($cartItems as $index => $item): ?>
+                    <div>
+                        <h3><?php echo htmlspecialchars($item['name']); ?></h3>
+                        <p>Price: <?php echo htmlspecialchars($item['price']); ?></p>
+                        <p>
+                            Quantity:
+                            <input type="number" name="quantities[<?php echo $index; ?>]" value="<?php echo $item['quantity']; ?>" min="0">
+                        </p>
+                    </div>
+                <?php endforeach; ?>
+                <button type="submit" name="update">Update Cart</button>
+                <button type="submit" name="checkout">Proceed to Checkout</button>
+            </form>
+        <?php else: ?>
+            <p>Your cart is empty.</p>
+        <?php endif; ?>
     </div>
-
-    <!-- Form for updating cart items -->
-    <form method="post">
-        <!-- Add form inputs for updating cart items -->
-        <button type="submit">Update Cart</button>
-    </form>
-
-    <!-- Form for proceeding to checkout -->
-    <form method="post">
-        <!-- Add form inputs for entering shipping details -->
-        <button type="submit" name="checkout">Proceed to Checkout</button>
-    </form>
-
-    <!-- Add your JavaScript code here -->
 </body>
 </html>

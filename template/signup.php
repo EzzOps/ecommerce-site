@@ -2,25 +2,39 @@
 
 // FILEPATH: /Users/mac/e-commerce/ecommerce-site/signup.php
 
-// Form Handling
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Collect user input
-    $firstName = $_POST['firstName'];
-    $lastName = $_POST['lastName'];
-    $email = $_POST['email'];
+    $firstName = trim($_POST['firstName']);
+    $lastName = trim($_POST['lastName']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    // Input Validation
-    // TODO: Add validation logic here
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        die('Invalid email format');
+    }
+    if (strlen($password) < 8) {
+        die('Password must be at least 8 characters long');
+    }
 
-    // User Registration
-    // TODO: Hash the password and store user information in the database
+    global $wpdb;
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    $tableName = $wpdb->prefix . 'users'; 
+    $wpdb->insert(
+        $tableName,
+        [
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'email' => $email,
+            'password' => $hashedPassword
+        ],
+        ['%s', '%s', '%s', '%s']
+    );
 
     // Session Handling
-    // TODO: Start a session for the user upon successful registration
+    session_start();
+    $_SESSION['email'] = $email;
+    $_SESSION['firstName'] = $firstName;
+    header('Location: welcome.php'); 
 }
-
-?>
 
 <!DOCTYPE html>
 <html>
